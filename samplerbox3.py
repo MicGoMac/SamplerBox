@@ -6,7 +6,11 @@
 #  license:   Creative Commons ShareAlike 3.0 (http://creativecommons.org/licenses/by-sa/3.0/)
 #
 #  samplerbox.py: Main file
-#
+
+#  This is a fork to port python3 for the Macintosh 
+#  by Michael Mak, Hong Kong
+#  The sound output on the Mac is known to be better.
+#  buttons and LCD codes were deleted
 
 
 #########################################
@@ -32,7 +36,7 @@ import time
 import numpy
 import os
 import re
-import sounddevice
+import sounddevice # may consider/compare pyaudio
 import threading
 from chunk import Chunk
 import struct
@@ -148,7 +152,7 @@ class Sound:
 
     def frames2array(self, data, sampwidth, numchan):
         if sampwidth == 2:
-        	#was fromstring
+        	#was fromstring, deprecated in python3
             npdata = numpy.frombuffer(data, dtype=numpy.int16)
         elif sampwidth == 3:
             npdata = samplerbox_audio.binary24_to_int16(data, len(data)/3)
@@ -187,6 +191,8 @@ def AudioCallback(outdata, frame_count, time_info, status):
         except:
             pass
     b *= globalvolume
+	#odata = (b.astype(numpy.int16)).tostring()
+    #return (odata, pyaudio.paContinue)
     outdata[:] = b.reshape(outdata.shape)
 
 def MidiCallback(message, time_stamp):
@@ -279,10 +285,16 @@ def ActuallyLoad():
         #display("E%03d" % preset)
         return
     print('Preset loading: %s (%s)' % (preset, basename))
+    '''
+    dirname = "/home/pi/SamplerBox_sounds/1 GrandPiano/"
+    print 'Preset loading: %s (%s)' % (preset, dirname)
+    display("L%03d" % preset)
+    '''
     #display("L%03d" % preset)
-
+	#m-- test out this definition.txt
     definitionfname = os.path.join(dirname, "definition.txt")
     if os.path.isfile(definitionfname):
+        print "definition found"
         with open(definitionfname, 'r') as definitionfile:
             for i, pattern in enumerate(definitionfile):
                 try:
@@ -369,6 +381,7 @@ except:
 #
 #########################################
 
+#always false, rtmidi used
 if USE_SERIALPORT_MIDI:
  
     def MidiSerialCallback():
@@ -399,10 +412,19 @@ if USE_SERIALPORT_MIDI:
 preset = 0
 LoadSamples()
 
+#this using pyaudio?
+def testNote(mnote, vel):
+    global playingnotes, sustain, sustainplayingnotes
+    global preset
+    try:
+        playingnotes.setdefault(mnote, []).append(samples[mnote, vel].play(mnote))
+    except:
+        pass
 
 #########################################
 # MIDI DEVICES DETECTION
 # MAIN LOOP
+#https://spotlightkid.github.io/python-rtmidi/rtmidi.html#usage-example
 #########################################
 port =None
 
