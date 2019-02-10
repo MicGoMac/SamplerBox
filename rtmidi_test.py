@@ -21,7 +21,7 @@ from rtmidi.midiutil import open_midiinput
 port =None# sys.argv[1] if len(sys.argv) > 1 else None
 
 try:
-    midiin, port_name = open_midiinput(port)
+    midiin, port_name = open_midiinput(0)
 except (EOFError, KeyboardInterrupt):
     sys.exit()
 
